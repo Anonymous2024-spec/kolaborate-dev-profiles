@@ -144,7 +144,7 @@ mysql -u root -p
 ```
 
 ```sql
-CREATE DATABASE dev_profiles;
+CREATE DATABASE kolaborate_devs;
 EXIT;
 ```
 
@@ -153,7 +153,7 @@ EXIT;
 The application will automatically create the necessary tables on first run, or you can manually create them:
 
 ```sql
-USE dev_profiles;
+USE kolaborate_devs;
 
 CREATE TABLE profiles (
   id INT AUTO_INCREMENT PRIMARY KEY,
