@@ -18,7 +18,7 @@ function App() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalProfiles, setTotalProfiles] = useState(0);
-  const profilesPerPage = 6; // Show 6 profiles per page
+  const profilesPerPage = 6;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -35,17 +35,34 @@ function App() {
     try {
       setLoading(true);
       const response = await profileAPI.getAll(page, profilesPerPage);
-      setProfiles(response.data);
 
-      // Calculate total pages (you might want to get this from backend)
-      // For now, we'll estimate based on current data
-      const estimatedTotal =
-        response.data.length === profilesPerPage
-          ? page * profilesPerPage + 1
-          : (page - 1) * profilesPerPage + response.data.length;
+      console.log("API Response:", response.data); // Debug log
 
-      setTotalProfiles(estimatedTotal);
-      setTotalPages(Math.ceil(estimatedTotal / profilesPerPage));
+      let profilesData = [];
+      let totalCount = 0;
+      let calculatedTotalPages = 1;
+
+      if (Array.isArray(response.data)) {
+        // Simple array response
+        profilesData = response.data;
+        totalCount = profilesData.length;
+        calculatedTotalPages = Math.ceil(totalCount / profilesPerPage);
+      } else if (response.data && Array.isArray(response.data.data)) {
+        // Paginated response
+        profilesData = response.data.data;
+        totalCount =
+          response.data.pagination?.totalProfiles || profilesData.length;
+        calculatedTotalPages =
+          response.data.pagination?.totalPages ||
+          Math.ceil(totalCount / profilesPerPage);
+      } else {
+        console.error("Unexpected response format:", response.data);
+        profilesData = [];
+      }
+
+      setProfiles(profilesData);
+      setTotalProfiles(totalCount);
+      setTotalPages(calculatedTotalPages);
     } catch (error) {
       console.error("Error fetching profiles:", error);
       alert("Failed to load profiles: " + error.message);
@@ -55,7 +72,7 @@ function App() {
     }
   };
 
-  // Search profiles (without pagination for simplicity)
+  // Search profiles (disable pagination during search)
   const searchProfiles = async (term) => {
     if (!term.trim()) {
       setCurrentPage(1);
@@ -65,18 +82,28 @@ function App() {
     try {
       setLoading(true);
       const response = await profileAPI.search(term);
-      setProfiles(response.data);
-      setTotalPages(1); // Disable pagination during search
-      setTotalProfiles(response.data.length);
+
+      let profilesData = [];
+      if (Array.isArray(response.data)) {
+        profilesData = response.data;
+      } else if (response.data && Array.isArray(response.data.data)) {
+        profilesData = response.data.data;
+      }
+
+      setProfiles(profilesData);
+      setTotalPages(1);
+      setTotalProfiles(profilesData.length);
+      setCurrentPage(1);
     } catch (error) {
       console.error("Error searching profiles:", error);
-      // Fallback to client-side filtering
-      const filtered = profiles.filter(
-        (profile) =>
-          profile.skills.some((skill) =>
-            skill.toLowerCase().includes(term.toLowerCase())
-          ) || profile.location?.toLowerCase().includes(term.toLowerCase())
-      );
+      const filtered = Array.isArray(profiles)
+        ? profiles.filter(
+            (profile) =>
+              profile.skills?.some((skill) =>
+                skill.toLowerCase().includes(term.toLowerCase())
+              ) || profile.location?.toLowerCase().includes(term.toLowerCase())
+          )
+        : [];
       setProfiles(filtered);
       setTotalPages(1);
       setTotalProfiles(filtered.length);
@@ -89,6 +116,8 @@ function App() {
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
     fetchProfiles(newPage);
+    // Scroll to top when changing pages
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // Create new profile
@@ -115,7 +144,7 @@ function App() {
         availableForWork: true,
         hourlyRate: "",
       });
-      // Refresh and go to first page to see the new profile
+      // Refresh and go to first page
       setCurrentPage(1);
       fetchProfiles(1);
       alert("Profile created successfully!");
@@ -154,7 +183,6 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-gradient-to-r from-blue-600 to-purple-700 text-white py-12">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-4xl font-bold mb-4">
@@ -164,7 +192,6 @@ function App() {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <SearchBar
           searchTerm={searchTerm}
@@ -180,10 +207,8 @@ function App() {
           onFormChange={handleFormChange}
         />
 
-        {/* Loading State */}
         {loading && <LoadingState />}
 
-        {/* Profiles Grid */}
         {!loading && (
           <div>
             <div className="flex justify-between items-center mb-6">
@@ -207,7 +232,6 @@ function App() {
                   ))}
                 </div>
 
-                {/* Pagination */}
                 {totalPages > 1 && (
                   <Pagination
                     currentPage={currentPage}

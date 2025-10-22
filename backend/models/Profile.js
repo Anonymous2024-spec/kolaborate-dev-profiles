@@ -109,6 +109,17 @@ class Profile {
       throw error;
     }
   }
+  //  Get total number of profiles
+  static async getTotalCount() {
+    const sql = "SELECT COUNT(*) as total FROM profiles";
+
+    try {
+      const [results] = await db.execute(sql);
+      return results[0].total;
+    } catch (error) {
+      throw error;
+    }
+  }
 }
 
 module.exports = Profile;
