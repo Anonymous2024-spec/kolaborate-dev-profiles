@@ -36,7 +36,7 @@ function App() {
       setLoading(true);
       const response = await profileAPI.getAll(page, profilesPerPage);
 
-      console.log("API Response:", response.data); // Debug log
+      console.log("API Response:", response.data);
 
       let profilesData = [];
       let totalCount = 0;
@@ -72,7 +72,7 @@ function App() {
     }
   };
 
-  // Search profiles (disable pagination during search)
+  // Search profiles -diable pagination for search results
   const searchProfiles = async (term) => {
     if (!term.trim()) {
       setCurrentPage(1);

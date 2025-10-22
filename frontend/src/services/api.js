@@ -10,7 +10,7 @@ export const profileAPI = {
   // Get all profiles with pagination
   getAll: (page = 1, limit = 6) => api.get(`/profiles?page=${page}&limit=${limit}`),
   
-  // Search profiles (no pagination for search)
+  // Search profiles 
   search: (term) => api.get(`/profiles/search/${term}`),
   
   // Create profile
